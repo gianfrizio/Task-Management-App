@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>API Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        const results = document.getElementById('results');
+
+        async function testAPI() {
+            results.innerHTML = '<p>Testing API connection...</p>';
+
+            try {
+                // Test 1: Health check
+                results.innerHTML += '<p><strong>Test 1: Health Check</strong></p>';
+                const healthResponse = await axios.get('http://localhost:5000/health');
+                results.innerHTML += `<p style="color: green;">✓ Health check OK: ${JSON.stringify(healthResponse.data)}</p>`;
+
+                // Test 2: Register
+                results.innerHTML += '<p><strong>Test 2: Register</strong></p>';
+                const username = 'testuser_' + Date.now();
+                const registerResponse = await axios.post(`${API_URL}/auth/register`, {
+                    username: username,
+                    email: `${username}@test.com`,
+                    password: 'Password123'
+                });
+                results.innerHTML += `<p style="color: green;">✓ Register OK: User ${registerResponse.data.user.username} created</p>`;
+
+                const token = registerResponse.data.token;
+                results.innerHTML += `<p>Token: ${token.substring(0, 30)}...</p>`;
+
+                // Test 3: Get tasks
+                results.innerHTML += '<p><strong>Test 3: Get Tasks</strong></p>';
+                const tasksResponse = await axios.get(`${API_URL}/tasks`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                results.innerHTML += `<p style="color: green;">✓ Get tasks OK: ${tasksResponse.data.tasks ? tasksResponse.data.tasks.length : tasksResponse.data.length} tasks found</p>`;
+
+                results.innerHTML += '<p><strong style="color: green;">✓ All tests passed!</strong></p>';
+
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;">✗ Error: ${error.message}</p>`;
+                if (error.response) {
+                    results.innerHTML += `<p style="color: red;">Response: ${JSON.stringify(error.response.data)}</p>`;
+                }
+                console.error('Full error:', error);
+            }
+        }
+
+        // Run test on page load
+        testAPI();
+    </script>
+</body>
+</html>
